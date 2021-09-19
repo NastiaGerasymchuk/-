@@ -35,11 +35,16 @@ class Shop
     return nil
   end
 
+  begin
   agent = Mechanize.new
   agent.log = Logger.new "mech.log"
   agent.user_agent_alias = 'Mac Safari'
-
   page = agent.get BASE_PAGE_PATH
+  rescue
+    'It is nil or empty'
+
+  else
+
   @@people_gender = []
   @@clother_category = []
   @@res_data = []
@@ -69,9 +74,12 @@ class Shop
       end
     end
   end
+  end
   writeCsv(PRODUCT_FILE_NAME, @@res_data, PRODUCT_HEADER)
   writeCsv(PEOPLE_FILE_NAME, @@people_gender, PEOPLE_HEADER)
   writeCsv(CATEGORY_FILE_NAME, @@clother_category, CATEGORY_HEADER)
   writeCsv(CURRENCY_FILE_NAME, @@currency, CURRENCY_HEADER)
   writeCsv(TREND_FILE_NAME, @@trend, TREND_HEADER)
+ensure
+  p "Finish"
 end
