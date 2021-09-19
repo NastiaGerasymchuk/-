@@ -9,6 +9,7 @@ require_relative 'Models/Gender'
 require_relative 'Models/Trend'
 require_relative 'Models/Nominal'
 require_relative 'Data/Selectors'
+
 class Shop
   include SiteData
   include Selectors
@@ -36,44 +37,44 @@ class Shop
   end
 
   begin
-  agent = Mechanize.new
-  agent.log = Logger.new "mech.log"
-  agent.user_agent_alias = 'Mac Safari'
-  page = agent.get BASE_PAGE_PATH
+    agent = Mechanize.new
+    agent.log = Logger.new "mech.log"
+    agent.user_agent_alias = 'Mac Safari'
+    page = agent.get BASE_PAGE_PATH
   rescue
     'It is nil or empty'
 
   else
 
-  @@people_gender = []
-  @@clother_category = []
-  @@res_data = []
-  @@currency = []
-  @@trend = []
-  person = page.css(PERSON)
-  person.each do |gender|
-    button = page.css(MENU_BUTTON)
-    button.each do |cat_link|
-      gender_tmp = Gender.new(gender.text).getGender
-      @@people_gender << gender_tmp if !@@people_gender.include?(gender_tmp)
-      clother_category_tmp = (Category.new(cat_link.text)).getCategory
-      @@clother_category << clother_category_tmp if !@@clother_category.include?(clother_category_tmp)
+    @@people_gender = []
+    @@clother_category = []
+    @@res_data = []
+    @@currency = []
+    @@trend = []
+    person = page.css(PERSON)
+    person.each do |gender|
+      button = page.css(MENU_BUTTON)
+      button.each do |cat_link|
+        gender_tmp = Gender.new(gender.text).getGender
+        @@people_gender << gender_tmp if !@@people_gender.include?(gender_tmp)
+        clother_category_tmp = (Category.new(cat_link.text)).getCategory
+        @@clother_category << clother_category_tmp if !@@clother_category.include?(clother_category_tmp)
 
-      data = agent.click(cat_link)
-      data.css('.product').each do |product|
-        clother_details = readData(product)
+        data = agent.click(cat_link)
+        data.css('.product').each do |product|
+          clother_details = readData(product)
 
-        currency_tmp = Nominal.new(clother_details.currency).name
-        trend_tmp = (Trend.new(clother_details.trend)).name
-        clother_details.gender = gender_tmp.first
-        clother_details.category = clother_category_tmp.first
-        @@res_data << clother_details.getClother if !@@res_data.include?(clother_details.getClother)
-        @@currency << currency_tmp if !@@currency.include?(currency_tmp)
-        @@trend << trend_tmp if !@@trend.include?(trend_tmp)
+          currency_tmp = Nominal.new(clother_details.currency).name
+          trend_tmp = (Trend.new(clother_details.trend)).name
+          clother_details.gender = gender_tmp.first
+          clother_details.category = clother_category_tmp.first
+          @@res_data << clother_details.getClother if !@@res_data.include?(clother_details.getClother)
+          @@currency << currency_tmp if !@@currency.include?(currency_tmp)
+          @@trend << trend_tmp if !@@trend.include?(trend_tmp)
 
+        end
       end
     end
-  end
   end
   writeCsv(PRODUCT_FILE_NAME, @@res_data, PRODUCT_HEADER)
   writeCsv(PEOPLE_FILE_NAME, @@people_gender, PEOPLE_HEADER)
