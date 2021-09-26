@@ -9,6 +9,7 @@ require_relative 'Models/Gender'
 require_relative 'Models/Trend'
 require_relative 'Models/Nominal'
 require_relative 'Data/Selectors'
+require 'json'
 
 class Shop
   include SiteData
@@ -21,9 +22,9 @@ class Shop
     image = product.css(IMAGE).attr(PHOTO_SOURCE)
     price_currency = product.css(PRICE).text.split
     price = price_currency[0]
-    if (price_currency[1] != nil) then
-      currency = price_currency[1]
 
+    if price_currency[1]
+      currency = price_currency[1]
     end
     return Clother.new(id, name, label, price, currency, image)
   end
@@ -33,54 +34,79 @@ class Shop
              :headers => header) do |csv|
       clother.each { |element| csv.puts(element) }
     end
-    return nil
   end
 
-  begin
-    agent = Mechanize.new
-    agent.log = Logger.new "mech.log"
-    agent.user_agent_alias = 'Mac Safari'
-    page = agent.get BASE_PAGE_PATH
-  rescue
-    'It is nil or empty'
+  def self.writeJsonToTxt(fileMame, jsonData)
+    File.open(fileMame, "a") do |f|
+      f.write(JSON.pretty_generate(jsonData) + ", ")
+    end
+  end
 
-  else
+  def self.fromJsonToCsv(csvFileName, jsonFile)
+    CSV.open("fromJsonToCsv/product.csv", "w") do |csv|
+      #open new file for write
+      JSON.parse(File.open("jsonData/product.json").read).each do |hash|
+        #open json to parse
+        csv << hash #write value to file
+      end
+    end
+  end
 
-    @@people_gender = []
-    @@clother_category = []
-    @@res_data = []
-    @@currency = []
-    @@trend = []
-    person = page.css(PERSON)
-    person.each do |gender|
-      button = page.css(MENU_BUTTON)
-      button.each do |cat_link|
-        gender_tmp = Gender.new(gender.text).getGender
-        @@people_gender << gender_tmp if !@@people_gender.include?(gender_tmp)
-        clother_category_tmp = (Category.new(cat_link.text)).getCategory
-        @@clother_category << clother_category_tmp if !@@clother_category.include?(clother_category_tmp)
+  def self.main
+    begin
+      agent = Mechanize.new
+      agent.log = Logger.new "mech.log"
+      agent.user_agent_alias = 'Mac Safari'
+      page = agent.get BASE_PAGE_PATH
+    rescue
+      Mechanize::Error => e
+      puts e
+    else
 
-        data = agent.click(cat_link)
-        data.css('.product').each do |product|
-          clother_details = readData(product)
+      @@people_gender = []
+      @@clother_category = []
+      @@res_data = []
+      @@currency = []
+      @@trend = []
+      person = page.css(PERSON)
+      person.each do |gender|
+        button = page.css(MENU_BUTTON)
+        button.each do |cat_link|
+          gender_tmp = Gender.new(gender.text).getGender
+          @@people_gender << gender_tmp if !@@people_gender.include?(gender_tmp)
+          clother_category_tmp = (Category.new(cat_link.text)).getCategory
+          @@clother_category << clother_category_tmp if !@@clother_category.include?(clother_category_tmp)
 
-          currency_tmp = Nominal.new(clother_details.currency).name
-          trend_tmp = (Trend.new(clother_details.trend)).name
-          clother_details.gender = gender_tmp.first
-          clother_details.category = clother_category_tmp.first
-          @@res_data << clother_details.getClother if !@@res_data.include?(clother_details.getClother)
-          @@currency << currency_tmp if !@@currency.include?(currency_tmp)
-          @@trend << trend_tmp if !@@trend.include?(trend_tmp)
+          data = agent.click(cat_link)
+          data.css('.product').each do |product|
+            clother_details = readData(product)
 
+            currency_tmp = (Nominal.new(clother_details.currency)).getName
+            trend_tmp = (Trend.new(clother_details.trend)).getTrend
+            clother_details.gender = gender_tmp.first
+            clother_details.category = clother_category_tmp.first
+            @@res_data << clother_details.getClother if !@@res_data.include?(clother_details.getClother)
+            @@currency << currency_tmp if !@@currency.include?(currency_tmp)
+            @@trend << trend_tmp if !@@trend.include?(trend_tmp)
+            # writeJsonToTxt(JSON_FILE_NAME,clother_details.as_json())
+
+          end
         end
       end
     end
   end
-  writeCsv(PRODUCT_FILE_NAME, @@res_data, PRODUCT_HEADER)
-  writeCsv(PEOPLE_FILE_NAME, @@people_gender, PEOPLE_HEADER)
-  writeCsv(CATEGORY_FILE_NAME, @@clother_category, CATEGORY_HEADER)
-  writeCsv(CURRENCY_FILE_NAME, @@currency, CURRENCY_HEADER)
-  writeCsv(TREND_FILE_NAME, @@trend, TREND_HEADER)
+
+  # writeCsv(PRODUCT_FILE_NAME, @@res_data, PRODUCT_HEADER)
+  # writeCsv(PEOPLE_FILE_NAME, @@people_gender, PEOPLE_HEADER)
+  # writeCsv(CATEGORY_FILE_NAME, @@clother_category, CATEGORY_HEADER)
+  # writeCsv(CURRENCY_FILE_NAME, @@currency, CURRENCY_HEADER)
+  # writeCsv(TREND_FILE_NAME, @@trend, TREND_HEADER)
+  fromJsonToCsv(TO_CSV_FILE_NAME, FROM_JSON_FILE_NAME)
+
 ensure
-  p "Finish"
+  puts "Finish" # the status code as a string, e.g. "404"
 end
+
+#end
+
+Shop.main()

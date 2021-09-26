@@ -10,4 +10,7 @@ module SiteData
   CATEGORY_FILE_NAME='csvData/category.csv'
   CURRENCY_FILE_NAME='csvData/currency.csv'
   TREND_FILE_NAME='csvData/trend.csv'
+  JSON_FILE_NAME='jsonData/product.txt'
+  FROM_JSON_FILE_NAME='jsonData/product.json'
+  TO_CSV_FILE_NAME='fromJsonToCsv/product.csv'
 end

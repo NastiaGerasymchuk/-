@@ -14,4 +14,8 @@ class Gender
   def getGender
     [gender]
   end
+
+  def as_json()
+    { name: gender }
+  end
 end

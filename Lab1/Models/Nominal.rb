@@ -1,6 +1,6 @@
 class Nominal
   def initialize(name)
-    @@name = name.split
+    @@name = name
   end
 
   def name
@@ -13,5 +13,9 @@ class Nominal
 
   def getName
     [name]
+  end
+
+  def as_json()
+    { name: name }
   end
 end

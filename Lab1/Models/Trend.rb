@@ -1,6 +1,6 @@
 class Trend
   def initialize(name)
-    @@name = name.split(",")
+    @@name = name
   end
 
   def name
@@ -13,5 +13,11 @@ class Trend
 
   def getTrend
     [name]
+  end
+
+  public def as_json()
+    {
+      name: name,
+    }
   end
 end

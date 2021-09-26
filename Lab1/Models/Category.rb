@@ -8,10 +8,15 @@ class Category
   end
 
   def name=(name)
-    @@name = name
+    @@name = Category.new(name)
   end
 
   def getCategory
     [name]
+  end
+  public def as_json()
+    {
+      name: name,
+    }
   end
 end
